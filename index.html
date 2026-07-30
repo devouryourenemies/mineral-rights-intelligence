@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mineral Rights Intelligence — Platform Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #08080e;
+    color: #e8e8ed;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(8,8,14,0.92); backdrop-filter: blur(16px);
+    border-bottom: 1px solid #1a1a2e;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 56px;
+  }
+  .nav-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: #4ade80;
+  }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link {
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 8px 20px; border-radius: 6px; cursor: pointer;
+    color: #666; transition: all .2s;
+    font-family: 'JetBrains Mono', monospace;
+    background: none; border: none;
+  }
+  .nav-link:hover { color: #aaa; background: #111118; }
+  .nav-link.active { color: #4ade80; background: rgba(74,222,128,0.08); }
+
+  /* CONTAINER */
+  .container { max-width: 1000px; margin: 0 auto; padding: 80px 24px 40px; }
+
+  /* TABS */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* TAB 1: Lead Report */
+  .header { padding-bottom: 32px; margin-bottom: 40px; border-bottom: 2px solid #1a1a2e; }
+  .header .logo { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #4ade80; margin-bottom: 6px; }
+  .header h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .header .subtitle { font-size: 13px; color: #666; }
+  .header .meta { display: flex; gap: 20px; margin-top: 14px; font-size: 11px; color: #444; flex-wrap: wrap; }
+  .header .meta span { font-family: 'JetBrains Mono', monospace; }
+
+  .section-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #4ade80; font-family: 'JetBrains Mono', monospace; margin-bottom: 14px; border-left: 3px solid #4ade80; padding-left: 10px; }
+
+  .lead-card { background: #0d0d14; border: 1px solid #1a1a2e; border-radius: 10px; padding: 24px; margin-bottom: 18px; position: relative; }
+  .lead-card .score-badge { position: absolute; top: 18px; right: 18px; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; font-family: 'JetBrains Mono', monospace; }
+  .score-hot { background: #dc2626; color: white; box-shadow: 0 0 16px rgba(220,38,38,0.25); }
+  .score-warm { background: #f59e0b; color: #08080e; box-shadow: 0 0 16px rgba(245,158,11,0.25); }
+  .score-qualified { background: #3b82f6; color: white; box-shadow: 0 0 16px rgba(59,130,246,0.25); }
+
+  .lead-name { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 2px; padding-right: 56px; }
+  .lead-type { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; }
+
+  .lead-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  @media (max-width: 600px) { .lead-grid { grid-template-columns: 1fr; } }
+  .lead-field { background: #06060b; padding: 10px 14px; border-radius: 6px; }
+  .lead-field .label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; margin-bottom: 3px; }
+  .lead-field .value { font-size: 13px; color: #e8e8ed; font-weight: 500; }
+  .lead-field .value.money { color: #4ade80; font-family: 'JetBrains Mono', monospace; }
+
+  .lead-summary { background: #06060b; border-left: 3px solid #4ade80; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0; font-size: 12px; color: #999; line-height: 1.7; }
+  .lead-summary strong { color: #e8e8ed; }
+
+  .lead-outreach { background: #06060b; border-left: 3px solid #3b82f6; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 12px 0; }
+  .lead-outreach .outreach-label { font-size: 9px; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
+  .lead-outreach p { font-size: 12px; color: #999; line-height: 1.6; font-style: italic; }
+
+  .source-tag { display: inline-block; background: #1a1a2e; color: #777; font-size: 9px; font-family: 'JetBrains Mono', monospace; padding: 2px 6px; border-radius: 3px; margin: 2px; }
+
+  .summary-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 32px; }
+  .summary-table th { text-align: left; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #555; font-family: 'JetBrains Mono', monospace; padding: 8px 10px; border-bottom: 2px solid #1a1a2e; }
+  .summary-table td { padding: 8px 10px; border-bottom: 1px solid #0d0d14; color: #e8e8ed; }
+  .summary-table tr:hover td { background: #0d0d14; }
+  .summary-table .money { color: #4ade80; font-family: 'JetBrains Mono', monospace; }
+  .summary-table .score { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+  /* TAB 2: Competitive Analysis */
+  .competitive-hero { text-align: center; padding: 40px 0 48px; }
+  .competitive-hero h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .competitive-hero p { font-size: 14px; color: #666; max-width: 600px; margin: 0 auto; }
+
+  .comp-section { margin-bottom: 40px; }
+  .comp-section h2 { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 14px; }
+
+  .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .comp-card { background: #0d0d14; border: 1px solid #1a1a2e; border-radius: 10px; padding: 20px; }
+  .comp-card h3 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+  .comp-card h3 .tag { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 4px; background: #1a1a2e; color: #666; }
+  .comp-card .price { font-size: 10px; color: #4ade80; font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+  .comp-card .focus { font-size: 11px; color: #888; margin-bottom: 10px; }
+  .comp-card ul { list-style: none; }
+  .comp-card ul li { font-size: 11px; color: #666; padding: 3px 0; }
+  .comp-card ul li::before { content: "▸ "; color: #4ade80; }
+
+  .diff-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 16px 0 32px; }
+  .diff-table th { text-align: left; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #555; font-family: 'JetBrains Mono', monospace; padding: 10px 12px; border-bottom: 2px solid #1a1a2e; }
+  .diff-table th:first-child { width: 200px; }
+  .diff-table td { padding: 10px 12px; border-bottom: 1px solid #0d0d14; color: #999; }
+  .diff-table td:first-child { color: #aaa; font-weight: 500; }
+  .diff-table td strong { color: #4ade80; }
+  .diff-table tr.our-row td { background: rgba(74,222,128,0.03); color: #ccc; }
+  .diff-table tr.our-row td:first-child { color: #4ade80; font-weight: 600; }
+
+  .pill { display: inline-block; font-size: 9px; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 10px; }
+  .pill.yes { background: rgba(74,222,128,0.12); color: #4ade80; }
+  .pill.no { background: rgba(100,100,100,0.12); color: #666; }
+  .pill.partial { background: rgba(245,158,11,0.12); color: #f59e0b; }
+
+  .gap-section { background: linear-gradient(135deg, rgba(74,222,128,0.06), rgba(59,130,246,0.06)); border: 1px solid #1a1a2e; border-radius: 12px; padding: 28px; margin: 24px 0; }
+  .gap-section h3 { font-size: 15px; font-weight: 600; color: #4ade80; margin-bottom: 10px; }
+  .gap-section p { font-size: 13px; color: #999; line-height: 1.7; }
+  .gap-section ul { list-style: none; margin-top: 12px; }
+  .gap-section ul li { padding: 5px 0; font-size: 12px; color: #888; }
+  .gap-section ul li::before { content: "▸ "; color: #4ade80; }
+
+  .pitfall-box { background: #0d0d14; border-left: 3px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 16px 0; }
+  .pitfall-box .label { font-size: 9px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+  .pitfall-box p { font-size: 12px; color: #888; }
+
+  .method { background: #0d0d14; border: 1px solid #1a1a2e; border-radius: 10px; padding: 20px; }
+  .method h3 { font-size: 13px; color: #fff; margin-bottom: 10px; }
+  .method ul { list-style: none; }
+  .method ul li { padding: 4px 0; font-size: 12px; color: #888; }
+  .method ul li::before { content: "▸ "; color: #4ade80; }
+
+  .disclaimer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #1a1a2e; font-size: 10px; color: #333; line-height: 1.6; }
+
+  .footer { text-align: center; padding: 24px 0; font-size: 10px; color: #333; }
+  .footer a { color: #555; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">Mineral Intelligence</div>
+  <div class="nav-links">
+    <button class="nav-link active" data-tab="leads">Lead Report</button>
+    <button class="nav-link" data-tab="competitive">Competitive Edge</button>
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- TAB 1: LEAD REPORT -->
+<div id="tab-leads" class="tab-content active">
+
+  <div class="header">
+    <div class="logo">Ali Mineral Intelligence</div>
+    <h1>Sample Lead Report</h1>
+    <div class="subtitle">Permian Basin — $100K+ Royalty Owner Discovery Pipeline</div>
+    <div class="meta">
+      <span>Region: Delaware Basin, Permian</span>
+      <span>Leads: 5 Sample</span>
+      <span>Score Range: 64–92</span>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:0;">Executive Summary</div>
+  <p style="font-size:13px;color:#888;margin-bottom:16px;">
+    This report demonstrates the Mineral Rights Intelligence Agent's output format. Each lead includes estimated annual royalty,
+    portfolio complexity, enriched contact data, a 1–100 priority score, and a personalized outreach angle.
+    Data points are sourced from state regulatory databases, county clerk records, and public OSINT enrichment.
+  </p>
+
+  <table class="summary-table">
+    <thead>
+      <tr><th>Owner</th><th>Est. Annual Royalty</th><th>Score</th><th>Basin</th><th>Operator</th><th>Contact</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Robert J. Hightower</td><td class="money">$482,000</td><td class="score" style="color:#dc2626;">92</td><td>Delaware</td><td>Pioneer Natural Resources</td><td>Phone + Email</td></tr>
+      <tr><td>Dorothy Mae Caldwell Trust</td><td class="money">$310,000</td><td class="score" style="color:#dc2626;">85</td><td>Delaware</td><td>EOG Resources</td><td>Phone + Email + LinkedIn</td></tr>
+      <tr><td>Midland Minerals LLC</td><td class="money">$224,000</td><td class="score" style="color:#f59e0b;">78</td><td>Midland</td><td>Diamondback Energy</td><td>Phone only</td></tr>
+      <tr><td>Caldwell-Ross Family Partnership</td><td class="money">$175,000</td><td class="score" style="color:#3b82f6;">71</td><td>Delaware</td><td>Cimarex Energy</td><td>Phone + Mailing</td></tr>
+      <tr><td>Estate of William T. Garner</td><td class="money">$148,000</td><td class="score" style="color:#f59e0b;">64</td><td>Midland</td><td>Apache Corporation</td><td>Partial - heir pending</td></tr>
+    </tbody>
+  </table>
+
+  <!-- LEAD 1 -->
+  <div class="section-title">Lead Details</div>
+
+  <div class="lead-card">
+    <div class="score-badge score-hot">92</div>
+    <div class="lead-name">Robert J. Hightower</div>
+    <div class="lead-type">Individual Owner — Direct Mineral Interest</div>
+    <div class="lead-grid">
+      <div class="lead-field"><div class="label">Est. Annual Royalty</div><div class="value money">$482,000</div></div>
+      <div class="lead-field"><div class="label">Net Mineral Acres</div><div class="value">240 NMA</div></div>
+      <div class="lead-field"><div class="label">Basin / County / State</div><div class="value">Delaware Basin, Reeves County, TX</div></div>
+      <div class="lead-field"><div class="label">Operator</div><div class="value">Pioneer Natural Resources (3 wells)</div></div>
+      <div class="lead-field"><div class="label">Phone</div><div class="value">(432) 555-0178</div></div>
+      <div class="lead-field"><div class="label">Email</div><div class="value">r.hightower@westtx.net</div></div>
+      <div class="lead-field"><div class="label">Mailing Address</div><div class="value">4512 W. Wall St, Midland, TX 79703</div></div>
+      <div class="lead-field"><div class="label">Trigger Event</div><div class="value" style="color:#f59e0b;">Nearby Permit Filed (June 2026)</div></div>
+    </div>
+    <div class="lead-summary"><strong>Research Summary:</strong> Holds 240 NMA across 3 Pioneer wells in Reeves County. Combined output ~1,200 BBL/month. At $75 WTI and 18.75% royalty, estimated annual royalty is $482,000. <strong>A new drilling permit was filed within 1 mile in June 2026</strong>, suggesting additional production and potential lease opportunity. No current professional mineral management. Owner is 72, direct heir to original 1947 deed.</div>
+    <div class="lead-outreach"><div class="outreach-label">Personalized Outreach Angle</div><p>"Hi Robert, I noticed Pioneer recently filed a new drilling permit near your Reeves County acreage. With the existing production and this new activity, I wanted to introduce myself. I help mineral owners in your position evaluate their options."</p></div>
+    <div class="sources"><span class="source-tag">Texas RRC Well Data</span><span class="source-tag">Reeves County Tax Assessor</span><span class="source-tag">W-1 Permit Records</span></div>
+  </div>
+
+  <!-- LEAD 2 -->
+  <div class="lead-card">
+    <div class="score-badge score-hot">85</div>
+    <div class="lead-name">Dorothy Mae Caldwell Trust</div>
+    <div class="lead-type">Family Trust — Trustee: James R. Caldwell (Son)</div>
+    <div class="lead-grid">
+      <div class="lead-field"><div class="label">Est. Annual Royalty</div><div class="value money">$310,000</div></div>
+      <div class="lead-field"><div class="label">Net Mineral Acres</div><div class="value">180 NMA</div></div>
+      <div class="lead-field"><div class="label">Basin / County / State</div><div class="value">Delaware Basin, Loving County, TX</div></div>
+      <div class="lead-field"><div class="label">Operator</div><div class="value">EOG Resources (5 wells)</div></div>
+      <div class="lead-field"><div class="label">Phone</div><div class="value">(432) 555-0234</div></div>
+      <div class="lead-field"><div class="label">Email</div><div class="value">jcaldwell@outlook.com</div></div>
+      <div class="lead-field"><div class="label">Mailing Address</div><div class="value">1203 N. Big Spring St, Midland, TX 79701</div></div>
+      <div class="lead-field"><div class="label">Trigger Event</div><div class="value" style="color:#4ade80;">New Well Completion (May 2026)</div></div>
+    </div>
+    <div class="lead-summary"><strong>Research Summary:</strong> Trust established 1985 from original 1922 deed. Dorothy Mae (88) is grantor, son James (62) is trustee. EOG completed a new Wolfcamp D well in May 2026, increasing monthly production ~35%. <strong>Multiple operators across fragmented tracts creates complexity for professional management.</strong> No existing representation. Division orders show unassigned well interests.</div>
+    <div class="lead-outreach"><div class="outreach-label">Personalized Outreach Angle</div><p>"Hi James, I came across the Caldwell Trust's holdings in Loving County while researching EOG's recent completion. I noticed some complexities in the division orders across multiple operators — I'd be happy to walk through what I'm seeing."</p></div>
+    <div class="sources"><span class="source-tag">Texas RRC Production</span><span class="source-tag">Loving County Probate</span><span class="source-tag">SOS Business Filings</span><span class="source-tag">EOG Division Orders</span></div>
+  </div>
+
+  <!-- LEAD 3 -->
+  <div class="lead-card">
+    <div class="score-badge score-warm">78</div>
+    <div class="lead-name">Midland Minerals LLC</div>
+    <div class="lead-type">Family LLC — Members: Mark Wells (75%), Sarah Wells (25%)</div>
+    <div class="lead-grid">
+      <div class="lead-field"><div class="label">Est. Annual Royalty</div><div class="value money">$224,000</div></div>
+      <div class="lead-field"><div class="label">Net Mineral Acres</div><div class="value">120 NMA</div></div>
+      <div class="lead-field"><div class="label">Basin / County / State</div><div class="value">Midland Basin, Martin County, TX</div></div>
+      <div class="lead-field"><div class="label">Operator</div><div class="value">Diamondback Energy (2 wells)</div></div>
+      <div class="lead-field"><div class="label">Phone</div><div class="value">(432) 555-0312</div></div>
+      <div class="lead-field"><div class="label">Email</div><div class="value">Not verified</div></div>
+      <div class="lead-field"><div class="label">Registered Agent</div><div class="value">Mark Wells, 800 E. Indiana Ave, Midland TX</div></div>
+      <div class="lead-field"><div class="label">Trigger Event</div><div class="value" style="color:#888;">Stable</div></div>
+    </div>
+    <div class="lead-summary"><strong>Research Summary:</strong> LLC formed 2003 as family vehicle. No operating agreement addressing Pugh clause implications or pooled acreage. Mark Wells (78) is at an age where estate planning for mineral assets held in an LLC becomes relevant. <strong>LLC structure may benefit from review for estate transfer efficiency.</strong></div>
+    <div class="lead-outreach"><div class="outreach-label">Personalized Outreach Angle</div><p>"Hi Mark, I noticed Midland Minerals was formed in 2003. I've been helping mineral owners review whether their entity structures are still optimized for current market conditions and estate planning. Would a brief call be worth your time?"</p></div>
+    <div class="sources"><span class="source-tag">Texas SOS Business Filings</span><span class="source-tag">Martin County Tax Assessor</span><span class="source-tag">Texas RRC Well Data</span></div>
+  </div>
+
+  <!-- LEAD 4 -->
+  <div class="lead-card">
+    <div class="score-badge score-qualified">71</div>
+    <div class="lead-name">Caldwell-Ross Family Partnership</div>
+    <div class="lead-type">Family Partnership — Thomas Caldwell, Rachel Ross, David Caldwell</div>
+    <div class="lead-grid">
+      <div class="lead-field"><div class="label">Est. Annual Royalty</div><div class="value money">$175,000</div></div>
+      <div class="lead-field"><div class="label">Net Mineral Acres</div><div class="value">95 NMA</div></div>
+      <div class="lead-field"><div class="label">Basin / County / State</div><div class="value">Delaware Basin, Reeves County, TX</div></div>
+      <div class="lead-field"><div class="label">Operator</div><div class="value">Cimarex Energy (3 wells)</div></div>
+      <div class="lead-field"><div class="label">Phone</div><div class="value">(432) 555-0189</div></div>
+      <div class="lead-field"><div class="label">Email</div><div class="value">Not verified</div></div>
+      <div class="lead-field"><div class="label">Mailing Address</div><div class="value">3200 N. Big Spring, Suite 100, Midland TX 79705</div></div>
+      <div class="lead-field"><div class="label">Trigger Event</div><div class="value" style="color:#dc2626;">Probate Filing (July 2026)</div></div>
+    </div>
+    <div class="lead-summary"><strong>Research Summary:</strong> Probate filed July 2026 for founding partner Margaret Caldwell (deceased June 2026). Her 33.3% interest is now in estate distribution. <strong>The estate executor may need representation for the mineral position.</strong> Thomas Caldwell (58) is managing partner. Partnership agreement dated 1998, not updated.</div>
+    <div class="lead-outreach"><div class="outreach-label">Personalized Outreach Angle</div><p>"Hi Thomas, my condolences on Margaret's passing. With the estate in distribution, there may be important decisions about her 1/3 interest in the partnership's mineral holdings. I help families navigate exactly these situations."</p></div>
+    <div class="sources"><span class="source-tag">Reeves County Probate Court</span><span class="source-tag">Texas SOS Partnership Filing</span><span class="source-tag">Texas RRC Well Data</span></div>
+  </div>
+
+  <!-- LEAD 5 -->
+  <div class="lead-card">
+    <div class="score-badge score-warm">64</div>
+    <div class="lead-name">Estate of William T. Garner</div>
+    <div class="lead-type">Probate — Heirs: Lisa Garner-Harris, Michael Garner</div>
+    <div class="lead-grid">
+      <div class="lead-field"><div class="label">Est. Annual Royalty</div><div class="value money">$148,000</div></div>
+      <div class="lead-field"><div class="label">Net Mineral Acres</div><div class="value">85 NMA</div></div>
+      <div class="lead-field"><div class="label">Basin / County / State</div><div class="value">Midland Basin, Midland County, TX</div></div>
+      <div class="lead-field"><div class="label">Operator</div><div class="value">Apache Corporation (2 wells)</div></div>
+      <div class="lead-field"><div class="label">Phone</div><div class="value">Not found — heirs only</div></div>
+      <div class="lead-field"><div class="label">Email</div><div class="value">Not found</div></div>
+      <div class="lead-field"><div class="label">Executor</div><div class="value">Lisa Garner-Harris c/o Harris Law PLLC</div></div>
+      <div class="lead-field"><div class="label">Trigger Event</div><div class="value" style="color:#dc2626;">Active Probate</div></div>
+    </div>
+    <div class="lead-summary"><strong>Research Summary:</strong> William T. Garner passed April 2026. Estate includes 85 NMA across 2 Apache wells in Midland County. <strong>Royalty payments held by Apache land department pending estate resolution.</strong> Heirs Lisa (54, Houston attorney) and Michael (51, Dallas real estate) are both non-residents with no established mineral management relationship.</div>
+    <div class="lead-outreach"><div class="outreach-label">Personalized Outreach Angle</div><p>"Hi Lisa, I noticed the probate filing for your father's estate. Apache has royalties in escrow pending resolution. I specialize in helping out-of-area heirs understand their mineral positions after an estate settles."</p></div>
+    <div class="sources"><span class="source-tag">Midland County Probate Court</span><span class="source-tag">Texas RRC Well Data</span><span class="source-tag">County Clerk Deed Records</span></div>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div class="section-title">Methodology</div>
+  <div class="method">
+    <h3>Data Sources</h3>
+    <ul>
+      <li>Texas Railroad Commission — well data, drilling permits, production reports</li>
+      <li>County Tax Assessor — property tax records, mailing addresses, delinquent tax flags</li>
+      <li>County Probate Court — estate filings, will probates, heir identification</li>
+      <li>County Clerk — mineral deed recordings, assignments</li>
+      <li>Secretary of State — LLC, trust, partnership filings and registered agents</li>
+      <li>Public OSINT — property appraiser records, voter registration, corporate filings</li>
+    </ul>
+    <h3 style="margin-top: 14px;">Scoring Formula (1–100)</h3>
+    <ul>
+      <li>Royalty Estimate: 40 pts (thresholds at $100K, $250K, $500K)</li>
+      <li>Portfolio Complexity: 20 pts (single tract vs. multiple operators)</li>
+      <li>Trigger Events: 15 pts (permit, probate, tax distress)</li>
+      <li>Contactability: 15 pts (phone/email/mailing available)</li>
+      <li>Willingness Signal: 10 pts (estate, recent sale, etc.)</li>
+    </ul>
+  </div>
+
+  <!-- PRICING -->
+  <div class="section-title">Pricing</div>
+  <div class="method">
+    <h3>Phase 1: Proof of Concept — $25,000 to $35,000 (4–6 weeks)</h3>
+    <ul>
+      <li>Target one high-activity county</li>
+      <li>Full pipeline: scrape, enrich, score, export for that county</li>
+      <li>Deliver verified lead list with full contact enrichment</li>
+    </ul>
+    <h3 style="margin-top: 14px;">Phase 2: Full Enterprise Build — $60,000 to $90,000</h3>
+    <ul>
+      <li>Expand to all target basins (Delaware, Midland, Bakken, Anadarko)</li>
+      <li>CRM integration (Salesforce, HubSpot, or custom)</li>
+      <li>Multi-channel notifications (Slack, SMS, Email)</li>
+    </ul>
+    <h3 style="margin-top: 14px;">Phase 3: Managed SaaS — $3,000 to $6,000/month</h3>
+    <ul>
+      <li>Ongoing OSINT infrastructure, scraping maintenance, data verification</li>
+      <li>Model updates and scoring calibration</li>
+      <li>SLA support and lead quality guarantees</li>
+    </ul>
+  </div>
+
+  <div class="disclaimer">CONFIDENTIAL — Sample Output Demo. This document demonstrates output format. Lead data shown is illustrative and based on real Permian Basin methodology. Actual production data and contact information sourced from live regulatory databases during deployment. All OSINT collection targets Publicly Accessible Information (PAI) only.</div>
+</div>
+
+<!-- TAB 2: COMPETITIVE EDGE -->
+<div id="tab-competitive" class="tab-content">
+
+  <div class="competitive-hero">
+    <h1>Competitive Landscape</h1>
+    <p>How the Mineral Rights Intelligence Agent compares to every existing tool in the market — and where we win.</p>
+  </div>
+
+  <div class="comp-section">
+    <h2>The Incumbents</h2>
+    <div class="comp-grid">
+      <div class="comp-card">
+        <h3>MineralScout.ai <span class="tag">Closest</span></h3>
+        <div class="price">~$5k-15k/mo est.</div>
+        <div class="focus">AI lead gen for mineral acquisition firms</div>
+        <ul>
+          <li>Chain of title analysis</li>
+          <li>Owner identification + scoring</li>
+          <li>Skip tracing (phone, email)</li>
+          <li>Probate/deceased owner flags</li>
+        </ul>
+      </div>
+      <div class="comp-card">
+        <h3>Enverus / MineralSoft</h3>
+        <div class="price">$50k+/yr</div>
+        <div class="focus">Enterprise mineral portfolio management</div>
+        <ul>
+          <li>Land + revenue management</li>
+          <li>Lease search, profitability analysis</li>
+          <li>New permit alerts</li>
+          <li>Built for funds &amp; family offices</li>
+        </ul>
+      </div>
+      <div class="comp-card">
+        <h3>mineral.tech (Valor)</h3>
+        <div class="price">Not public</div>
+        <div class="focus">Royalty accounting &amp; analytics</div>
+        <ul>
+          <li>Real-time royalty tracking</li>
+          <li>Professional team management</li>
+          <li>County production data</li>
+          <li>Back-office accounting tool</li>
+        </ul>
+      </div>
+      <div class="comp-card">
+        <h3>Quorum Landdox</h3>
+        <div class="price">Enterprise</div>
+        <div class="focus">Land records &amp; lease management</div>
+        <ul>
+          <li>Land records database</li>
+          <li>Division order processing</li>
+          <li>No AI, no lead gen</li>
+          <li>Vintage enterprise software</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-section">
+    <h2>Feature Comparison</h2>
+    <table class="diff-table">
+      <thead>
+        <tr><th>Capability</th><th>MineralScout</th><th>Enverus</th><th>Valor</th><th style="color:#4ade80;">Our Agent</th></tr>
+      </thead>
+      <tbody>
+        <tr class="our-row"><td>Mineral owner discovery</td><td><span class="pill yes">Yes</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><strong>Yes</strong></td></tr>
+        <tr><td>Chain of title analysis</td><td><span class="pill yes">Yes</span></td><td><span class="pill partial">Limited</span></td><td><span class="pill no">No</span></td><td><span class="pill yes">Yes</span></td></tr>
+        <tr class="our-row"><td>Contact enrichment (phone, email, LinkedIn)</td><td><span class="pill yes">Phone + address</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><strong>Phone, email, LinkedIn, mailing</strong></td></tr>
+        <tr><td>Lead scoring (1–100)</td><td><span class="pill yes">Yes</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill yes">Yes</span></td></tr>
+        <tr class="our-row"><td>Continuous monitoring (daily cron)</td><td><span class="pill no">No</span></td><td><span class="pill partial">Basic alerts</span></td><td><span class="pill no">No</span></td><td><strong>Daily + weekly sweeps</strong></td></tr>
+        <tr><td>Trigger event detection (permits, probate, tax)</td><td><span class="pill partial">Probate only</span></td><td><span class="pill partial">Permit alerts</span></td><td><span class="pill no">No</span></td><td><span class="pill yes">All three</span></td></tr>
+        <tr class="our-row"><td>Personalized outreach email generation</td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><strong>Yes — per lead, per trigger type</strong></td></tr>
+        <tr><td>CRM export (CSV + JSON)</td><td><span class="pill partial">Export</span></td><td><span class="pill partial">Limited</span></td><td><span class="pill partial">Export</span></td><td><span class="pill yes">Structured + ready to push</span></td></tr>
+        <tr class="our-row"><td>Multi-channel alerts</td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><strong>Slack, SMS, email, daily digest</strong></td></tr>
+        <tr><td>Vision-based OCR for handwritten deeds</td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill yes">In design</span></td></tr>
+        <tr class="our-row"><td>Recruiter / placement workflow</td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><strong>Core differentiator</strong></td></tr>
+        <tr><td>AI agent deployable for mineral mgmt firms</td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill no">No</span></td><td><span class="pill yes">Yes</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- THE GAP -->
+  <div class="gap-section">
+    <h3>The Gap in the Market</h3>
+    <p><strong>No existing tool serves the executive recruiter placing mineral management professionals.</strong> Every platform in this space is designed for one of three buyers: acquisition firms buying minerals, institutional owners managing their portfolio, or E&P company land departments. None of them are built for a recruiter who needs to find $100K+ royalty owners and <em>recruit them as clients</em> for a mineral management firm.</p>
+    <p style="margin-top:10px;">And on the management firm side — companies like Paradise Valley Mineral Management — no existing tool delivers an <strong>autonomous AI landman</strong> that processes deeds, audits royalties, monitors leases, and surfaces opportunities automatically. They buy Enverus to <em>track</em> what they own. They don't have a tool that <em>works</em> their portfolio for them.</p>
+    <ul>
+      <li>MineralScout finds <strong>sellers</strong> — we find <strong>prospects for a recruiter or client for a manager</strong></li>
+      <li>Enverus tracks what you <strong>already own</strong> — our agent discovers what you <strong>don't know exists</strong></li>
+      <li>Valor does <strong>accounting</strong> — our agent does <strong>intelligence</strong></li>
+      <li>No tool runs <strong>continuous OSINT monitoring</strong> — ours scrapes daily for permits, probate, and tax distress</li>
+      <li>No tool generates <strong>personalized outreach</strong> — ours writes a bespoke email for every lead</li>
+      <li>No tool scores leads by <strong>both value and recruiter fit</strong> — ours does both</li>
+      <li>No tool can be deployed as an <strong>AI agent inside a mineral management firm</strong> — ours can</li>
+    </ul>
+  </div>
+
+  <!-- PITCH FOR MARIAN -->
+  <div class="section-title">The Marian Pasko / PVMM Angle</div>
+  <div class="pitfall-box">
+    <div class="label">Why This Matters for Paradise Valley Mineral Management</div>
+    <p>PVMM manages 10,000+ wells and $50M+ in annual client revenue across 1.5M+ acres. Their team of landmen manually processes deeds, audits royalties, and monitors lease terms. A single deployable AI agent — purpose-built for their workflow — could automate 70% of that document processing and monitoring workload, letting their team focus on high-value client relationships instead of county courthouse research. No existing software offers that. We build it.</p>
+  </div>
+
+  <!-- PITCH FOR ALI -->
+  <div class="section-title">The Ali / Recruiter Angle</div>
+  <div class="pitfall-box" style="border-left-color: #3b82f6;">
+    <div class="label" style="color: #3b82f6;">Why This Matters for Executive Recruiting</div>
+    <p>Ali targets $100K+ royalty owners for placement at mineral management firms. Those owners don't advertise on LinkedIn. They don't know they're targets. Finding them requires stitching together public data from the RRC, county tax assessors, probate courts, and corporate filings — which takes days per lead manually. Our agent does it in minutes, at scale, and generates ready-to-send outreach. No recruiting platform in existence connects to oil &amp; gas public records.</p>
+  </div>
+
+  <!-- PRICING -->
+  <div class="section-title" style="margin-top:40px;">Our Pricing vs. The Market</div>
+  <div class="method">
+    <table class="diff-table">
+      <thead>
+        <tr><th></th><th>MineralScout</th><th>Enverus</th><th style="color:#4ade80;">Our Agent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Entry cost</td><td>Not public (likely $5k-15k/mo)</td><td>$50k-100k+/yr</td><td><strong>$25k-35k PoC</strong></td></tr>
+        <tr><td>Full deployment</td><td>$???</td><td>$100k+/yr</td><td><strong>$60k-90k one-time</strong></td></tr>
+        <tr><td>Ongoing</td><td>Monthly SaaS</td><td>Annual license</td><td><strong>$3k-6k/month</strong></td></tr>
+        <tr><td>Contract</td><td>Annual</td><td>Multi-year</td><td><strong>Pay-as-you-grow</strong></td></tr>
+        <tr><td>Implementation</td><td>Self-serve onboarding</td><td>6-month enterprise deployment</td><td><strong>4-6 week PoC</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="disclaimer">Analysis based on publicly available information as of July 2026. Competitor pricing is estimated from public sources and industry knowledge.</div>
+</div>
+
+<footer class="footer">
+  Confidential — Prepared for client presentation
+</footer>
+
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.nav-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Score badge background color
+  document.querySelectorAll('.score-badge').forEach(el => {
+    const score = parseInt(el.textContent);
+    if (score >= 80) {
+      el.classList.add('score-hot');
+    } else if (score >= 70) {
+      el.classList.add('score-warm');
+    } else {
+      el.classList.add('score-qualified');
+    }
+  });
+</script>
+
+</body>
+</html>
